@@ -9,15 +9,20 @@ class TopProductsService extends BaseService {
   }
 
   async getTopProducts() {
-    return await this.productService_.list({
-      status: 'published'
-    }, { 
-      take: 5,
-      sort: {
-        'metadata.sales': -1
-      },
+    const products = await this.productService_.list({
+      status: ['published']
+    }, {
       relations: ["variants", "variants.prices", "options", "options.values", "images", "tags", "collection", "type"]
     });
+
+    products.sort((a, b) => {
+      const aSales = a.metadata && a.metadata.sales ? a.metadata.sales : 0;
+      const bSales = b.metadata && b.metadata.sales ? b.metadata.sales : 0;
+
+      return aSales > bSales ? -1 : (aSales < bSales ? 1 : 0);
+    });
+
+    return products.slice(0, 4);
   }
 
   async updateSales(orderId) {
